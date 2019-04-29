@@ -93,7 +93,7 @@ def train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers,
             print('=' * 50)
             if phase == 'valid' and epoch_loss < best_loss:
                 best_num = epoch+1
-                best_loss = epoch_loss
+                best_loss = epoch_loss / int(file_num / batch_size)
                 best_model_wts = copy.deepcopy(model.state_dict())
                 print('best model num:{}, best loss is {:.8f}'.format(best_num, best_loss))
             if (epoch + 1) % interval == 0 and phase == 'valid':
