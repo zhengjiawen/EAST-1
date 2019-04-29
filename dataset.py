@@ -394,3 +394,28 @@ class custom_dataset(data.Dataset):
 		score_map, geo_map, ignored_map = get_score_geo(img, vertices, labels, self.scale, self.length)
 		return transform(img), score_map, geo_map, ignored_map
 
+
+class valid_dataset(data.Dataset):
+	def __init__(self, img_path, gt_path, scale=0.25, length=512):
+		super(valid_dataset, self).__init__()
+		self.img_files = [os.path.join(img_path, img_file) for img_file in sorted(os.listdir(img_path))]
+		self.gt_files = [os.path.join(gt_path, gt_file) for gt_file in sorted(os.listdir(gt_path))]
+		self.scale = scale
+		self.length = length
+
+	def __len__(self):
+		return len(self.img_files)
+
+	def __getitem__(self, index):
+		with open(self.gt_files[index], 'r') as f:
+			lines = f.readlines()
+		vertices, labels = extract_vertices(lines)
+
+		img = Image.open(self.img_files[index])
+
+		transform = transforms.Compose([transforms.ToTensor(), \
+										transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))])
+
+		score_map, geo_map, ignored_map = get_score_geo(img, vertices, labels, self.scale, self.length)
+		return transform(img), score_map, geo_map, ignored_map
+
