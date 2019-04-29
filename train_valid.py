@@ -9,6 +9,8 @@ import os
 import time
 import numpy as np
 import copy
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 def drawLoss(train_loss, valid_loss, save_name):
@@ -118,6 +120,10 @@ if __name__ == '__main__':
     lr = 1e-2
     num_workers = 4
     epoch_iter = 3000
-    save_interval = 20
+    save_interval = 30
     train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers, epoch_iter, save_interval)
+    # a = [1,2,3,4,5]
+    # b = [11,12,13,14,15]
+    # drawLoss(a, b, './test.jpg')
+
 
