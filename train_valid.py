@@ -14,11 +14,12 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 def drawLoss(train_loss, valid_loss, save_name):
-    num = len(train_loss)
-    x = np.linspace(0, num, num)
+    x1 = range(0,len(train_loss))
+    x2 = range(0,len(valid_loss))
+    # print(x1,":",x2)
     plt.figure(1)
-    plt.plot(x, train_loss, c='red', label='train loss')
-    plt.plot(x, valid_loss, c='blue', label = 'valid loss')
+    plt.plot(x1, train_loss, c='red', label='train loss')
+    plt.plot(x2, valid_loss, c='blue', label = 'valid loss')
     plt.xlabel('item number')
     plt.legend(loc='upper left')
     plt.savefig(save_name, format='jpg')
@@ -95,7 +96,7 @@ def train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers,
                 best_loss = epoch_loss
                 best_model_wts = copy.deepcopy(model.state_dict())
                 print('best model num:{}, best loss is {:.8f}'.format(best_num, best_loss))
-            if (epoch + 1) % interval == 0:
+            if (epoch + 1) % interval == 0 and phase == 'valid':
                 savePath = './pths_valid/'+'lossImg'+str(epoch+1)+'.jpg'
                 drawLoss(train_loss, valid_loss, savePath)
                 print(time.asctime(time.localtime(time.time())))
@@ -119,8 +120,8 @@ if __name__ == '__main__':
     batch_size = 50
     lr = 1e-2
     num_workers = 4
-    epoch_iter = 3000
-    save_interval = 30
+    epoch_iter = 2000
+    save_interval = 50
     train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers, epoch_iter, save_interval)
     # a = [1,2,3,4,5]
     # b = [11,12,13,14,15]

@@ -2,7 +2,7 @@ import time
 import torch
 import subprocess
 import os
-from model import EAST
+from model_resnet import EAST
 from detect import detect_dataset
 import numpy as np
 import shutil
@@ -34,7 +34,7 @@ def eval_model(model_name, test_img_path, submit_path, save_flag=True):
 
 
 if __name__ == '__main__': 
-	model_name = './pths/east_vgg16.pth'
-	test_img_path = os.path.abspath('/data/home/zjw/pythonFile/masktextspotter.caffe2/lib/datasets/data/icdar2015/test_img')
+	model_name = './pths/model_epoch_900.pth'
+	test_img_path = '/data/home/zjw/dataset/icdar2015/test_images/'
 	submit_path = './submit'
 	eval_model(model_name, test_img_path, submit_path)
