@@ -43,7 +43,7 @@ def train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers,
         data_parallel = True
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[epoch_iter // 4, epoch_iter * 2 // 4, epoch_iter * 3 // 4], gamma=0.1)
+    scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[epoch_iter // 5, epoch_iter * 2 // 5, epoch_iter * 3 // 5,epoch_iter * 4 // 5], gamma=0.1)
 
     best_loss = 1000
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -54,6 +54,7 @@ def train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers,
     for epoch in range(epoch_iter):
 
         for phase in ['train','valid']:
+        # for phase in ['valid', 'train']:
             if phase == 'train':
                 model.train()
                 scheduler.step()
@@ -63,6 +64,8 @@ def train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers,
             epoch_time = time.time()
 
             for i, (img, gt_score, gt_geo, ignored_map) in enumerate(dataLoader[phase]):
+                if i == 35:
+                    print(i)
                 start_time = time.time()
                 img, gt_score, gt_geo, ignored_map = img.to(device), gt_score.to(device), gt_geo.to(device), ignored_map.to(device)
                 optimizer.zero_grad()
@@ -89,7 +92,7 @@ def train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers,
                 best_num = epoch+1
                 best_loss = epoch_loss
                 best_model_wts = copy.deepcopy(model.state_dict())
-                print('best model num:{}, best loss is {:,8f}', format(best_num, best_loss))
+                print('best model num:{}, best loss is {:.8f}'.format(best_num, best_loss))
             if (epoch + 1) % interval == 0:
                 savePath = './pths_valid/'+'lossImg'+str(epoch+1)+'.jpg'
                 drawLoss(train_loss, valid_loss, savePath)
@@ -111,10 +114,10 @@ if __name__ == '__main__':
     valid_gt_path = '/data/home/zjw/dataset/icdar2015/valid_gts/'
     pths_path = './pths_valid'
 
-    batch_size = 25
+    batch_size = 50
     lr = 1e-2
-    num_workers = 5
-    epoch_iter = 1000
+    num_workers = 4
+    epoch_iter = 3000
     save_interval = 20
     train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers, epoch_iter, save_interval)
 

@@ -9,6 +9,21 @@ import torchvision.transforms as transforms
 from torch.utils import data
 
 
+def resize_img(img):
+	'''resize image to be divisible by 32
+	'''
+	w, h = img.size
+	resize_w = w
+	resize_h = h
+
+	resize_h = resize_h if resize_h % 32 == 0 else int(resize_h / 32) * 32
+	resize_w = resize_w if resize_w % 32 == 0 else int(resize_w / 32) * 32
+	img = img.resize((resize_w, resize_h), Image.BILINEAR)
+	ratio_h = resize_h / h
+	ratio_w = resize_w / w
+
+	return img, ratio_h, ratio_w
+
 def cal_distance(x1, y1, x2, y2):
 	'''calculate the Euclidean distance'''
 	return math.sqrt((x1 - x2)**2 + (y1 - y2)**2)
@@ -229,7 +244,7 @@ def crop_img(img, vertices, labels, length):
 	return region, new_vertices
 
 
-def rotate_all_pixels(rotate_mat, anchor_x, anchor_y, length):
+def rotate_all_pixels(rotate_mat, anchor_x, anchor_y, width, height):
 	'''get rotated locations of all pixels for next stages
 	Input:
 		rotate_mat: rotatation matrix
@@ -240,11 +255,11 @@ def rotate_all_pixels(rotate_mat, anchor_x, anchor_y, length):
 		rotated_x : rotated x positions <numpy.ndarray, (length,length)>
 		rotated_y : rotated y positions <numpy.ndarray, (length,length)>
 	'''
-	x = np.arange(length)
-	y = np.arange(length)
+	x = np.arange(width)
+	y = np.arange(height)
 	x, y = np.meshgrid(x, y)
 	x_lin = x.reshape((1, x.size))
-	y_lin = y.reshape((1, x.size))
+	y_lin = y.reshape((1, y.size))
 	coord_mat = np.concatenate((x_lin, y_lin), 0)
 	rotated_coord = np.dot(rotate_mat, coord_mat - np.array([[anchor_x], [anchor_y]])) + \
                                                    np.array([[anchor_x], [anchor_y]])
@@ -329,7 +344,7 @@ def get_score_geo(img, vertices, labels, scale, length):
 		
 		rotated_vertices = rotate_vertices(vertice, theta)
 		x_min, x_max, y_min, y_max = get_boundary(rotated_vertices)
-		rotated_x, rotated_y = rotate_all_pixels(rotate_mat, vertice[0], vertice[1], length)
+		rotated_x, rotated_y = rotate_all_pixels(rotate_mat, vertice[0], vertice[1], length, length)
 	
 		d1 = rotated_y - y_min
 		d1[d1<0] = 0
@@ -349,6 +364,56 @@ def get_score_geo(img, vertices, labels, scale, length):
 	cv2.fillPoly(score_map, polys, 1)
 	return torch.Tensor(score_map).permute(2,0,1), torch.Tensor(geo_map).permute(2,0,1), torch.Tensor(ignored_map).permute(2,0,1)
 
+# test for valid
+def get_score_geo_valid(img, vertices, labels, scale):
+    width = img.width
+    height = img.height
+    score_map = np.zeros((int(img.height * scale), int(img.width * scale), 1), np.float32)
+    geo_map = np.zeros((int(img.height * scale), int(img.width * scale), 5), np.float32)
+    ignored_map = np.zeros((int(img.height * scale), int(img.width * scale), 1), np.float32)
+
+    index_w = np.arange(0, width, int(1 / scale))
+    index_h = np.arange(0, height, int(1 / scale))
+
+    index_x, index_y = np.meshgrid(index_w, index_h)
+    ignored_polys = []
+    polys = []
+
+    for i, vertice in enumerate(vertices):
+        if labels[i] == 0:
+            ignored_polys.append(np.around(scale * vertice.reshape((4, 2))).astype(np.int32))
+            continue
+
+        poly = np.around(scale * shrink_poly(vertice).reshape((4, 2))).astype(np.int32)  # scaled & shrinked
+        polys.append(poly)
+        temp_mask = np.zeros(score_map.shape[:-1], np.float32)
+        cv2.fillPoly(temp_mask, [poly], 1)
+
+        theta = find_min_rect_angle(vertice)
+        rotate_mat = get_rotate_mat(theta)
+
+        rotated_vertices = rotate_vertices(vertice, theta)
+        x_min, x_max, y_min, y_max = get_boundary(rotated_vertices)
+        rotated_x, rotated_y = rotate_all_pixels(rotate_mat, vertice[0], vertice[1], width, height)
+
+        d1 = rotated_y - y_min
+        d1[d1 < 0] = 0
+        d2 = y_max - rotated_y
+        d2[d2 < 0] = 0
+        d3 = rotated_x - x_min
+        d3[d3 < 0] = 0
+        d4 = x_max - rotated_x
+        d4[d4 < 0] = 0
+        geo_map[:, :, 0] += d1[index_y, index_x] * temp_mask
+        geo_map[:, :, 1] += d2[index_y, index_x] * temp_mask
+        geo_map[:, :, 2] += d3[index_y, index_x] * temp_mask
+        geo_map[:, :, 3] += d4[index_y, index_x] * temp_mask
+        geo_map[:, :, 4] += theta * temp_mask
+
+    cv2.fillPoly(ignored_map, ignored_polys, 1)
+    cv2.fillPoly(score_map, polys, 1)
+    return torch.Tensor(score_map).permute(2, 0, 1), torch.Tensor(geo_map).permute(2, 0, 1), torch.Tensor(
+        ignored_map).permute(2, 0, 1)
 
 def extract_vertices(lines):
 	'''extract vertices info from txt lines
@@ -412,10 +477,11 @@ class valid_dataset(data.Dataset):
 		vertices, labels = extract_vertices(lines)
 
 		img = Image.open(self.img_files[index])
+		img, ratio_h, ratio_w = resize_img(img)
 
 		transform = transforms.Compose([transforms.ToTensor(), \
 										transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))])
 
-		score_map, geo_map, ignored_map = get_score_geo(img, vertices, labels, self.scale, self.length)
+		score_map, geo_map, ignored_map = get_score_geo_valid(img, vertices, labels, self.scale)
 		return transform(img), score_map, geo_map, ignored_map
 
