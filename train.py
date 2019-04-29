@@ -3,7 +3,7 @@ from torch.utils import data
 from torch import nn
 from torch.optim import lr_scheduler
 from dataset import custom_dataset
-from model import EAST
+from model_resnet import EAST
 from loss import Loss
 import os
 import time
@@ -55,8 +55,10 @@ def train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers,
 
 
 if __name__ == '__main__':
-	train_img_path = os.path.abspath('../ICDAR_2015/train_img')
-	train_gt_path  = os.path.abspath('../ICDAR_2015/train_gt')
+	# train_img_path = os.path.abspath('../ICDAR_2015/train_img')
+	# train_gt_path  = os.path.abspath('../ICDAR_2015/train_gt')
+	train_img_path = '/data/home/zjw/pythonFile/masktextspotter.caffe2/lib/datasets/data/icdar2015/train_img'
+	train_gt_path = '/data/home/zjw/pythonFile/masktextspotter.caffe2/lib/datasets/data/icdar2015/train_gt'
 	pths_path      = './pths'
 	batch_size     = 24 
 	lr             = 1e-3
