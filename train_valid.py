@@ -25,8 +25,9 @@ def drawLoss(train_loss, valid_loss, save_name):
     plt.savefig(save_name, format='jpg')
 
 
-def train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers, epoch_iter, interval):
+def train(train_img_path, train_gt_path, valid_img_path, valid_gt_path, pths_path, batch_size, lr, num_workers, epoch_iter, interval):
     file_num = len(os.listdir(train_img_path))
+    valid_file_num = len(os.listdir(valid_img_path))
     trainset = custom_dataset(train_img_path, train_gt_path)
     train_loader = data.DataLoader(trainset, batch_size=batch_size, \
                                    shuffle=True, num_workers=num_workers, drop_last=True)
@@ -82,13 +83,17 @@ def train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers,
 
                 epoch_loss += loss.item()
 
+
                 print('Epoch is [{}/{}], mini-batch is [{}/{}], time consumption is {:.8f}, batch_loss is {:.8f}'.format( \
                     epoch + 1, epoch_iter, i + 1, int(file_num / batch_size), time.time() - start_time, loss.item()))
+            epoch_loss_mean = 0
             if phase == 'train':
-                train_loss.append(epoch_loss)
+                epoch_loss_mean = epoch_loss / int(file_num / batch_size)
+                train_loss.append(epoch_loss_mean)
             else:
-                valid_loss.append(epoch_loss)
-            print('phase:{}, epoch_loss is {:.8f}, epoch_time is {:.8f}'.format(phase, epoch_loss / int(file_num / batch_size),time.time() - epoch_time))
+                epoch_loss_mean = epoch_loss / int(valid_file_num / batch_size)
+                valid_loss.append(epoch_loss_mean)
+            print('phase:{}, epoch_loss is {:.8f}, epoch_time is {:.8f}'.format(phase, epoch_loss_mean,time.time() - epoch_time))
             print(time.asctime(time.localtime(time.time())))
             print('=' * 50)
             if phase == 'valid' and epoch_loss < best_loss:
@@ -122,7 +127,7 @@ if __name__ == '__main__':
     num_workers = 4
     epoch_iter = 2000
     save_interval = 50
-    train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers, epoch_iter, save_interval)
+    train(train_img_path, train_gt_path, valid_img_path, pths_path, valid_gt_path,batch_size, lr, num_workers, epoch_iter, save_interval)
     # a = [1,2,3,4,5]
     # b = [11,12,13,14,15]
     # drawLoss(a, b, './test.jpg')
