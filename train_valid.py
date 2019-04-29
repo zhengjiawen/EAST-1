@@ -68,8 +68,6 @@ def train(train_img_path, train_gt_path, valid_img_path, valid_gt_path, pths_pat
             epoch_time = time.time()
 
             for i, (img, gt_score, gt_geo, ignored_map) in enumerate(dataLoader[phase]):
-                if i == 35:
-                    print(i)
                 start_time = time.time()
                 img, gt_score, gt_geo, ignored_map = img.to(device), gt_score.to(device), gt_geo.to(device), ignored_map.to(device)
                 optimizer.zero_grad()
@@ -93,7 +91,7 @@ def train(train_img_path, train_gt_path, valid_img_path, valid_gt_path, pths_pat
             else:
                 epoch_loss_mean = epoch_loss / int(valid_file_num / batch_size)
                 valid_loss.append(epoch_loss_mean)
-            print('phase:{}, epoch_loss is {:.8f}, epoch_time is {:.8f}'.format(phase, epoch_loss_mean,time.time() - epoch_time))
+            print('phase:{}, epoch_loss is {:.8f}, epoch_time is {:.8f}'.format(phase, epoch_loss_mean ,time.time() - epoch_time))
             print(time.asctime(time.localtime(time.time())))
             print('=' * 50)
             if phase == 'valid' and epoch_loss < best_loss:
@@ -127,7 +125,7 @@ if __name__ == '__main__':
     num_workers = 4
     epoch_iter = 2000
     save_interval = 50
-    train(train_img_path, train_gt_path, valid_img_path, pths_path, valid_gt_path,batch_size, lr, num_workers, epoch_iter, save_interval)
+    train(train_img_path, train_gt_path, valid_img_path,valid_gt_path, pths_path, batch_size, lr, num_workers, epoch_iter, save_interval)
     # a = [1,2,3,4,5]
     # b = [11,12,13,14,15]
     # drawLoss(a, b, './test.jpg')
