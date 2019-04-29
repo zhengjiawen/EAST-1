@@ -4,7 +4,6 @@ import torch
 import torch.nn.functional as F
 import math
 
-
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152', 'resnext50_32x4d', 'resnext101_32x8d']
 
@@ -306,14 +305,14 @@ class merge(nn.Module):
         self.bn2 = nn.BatchNorm2d(128)
         self.relu2 = nn.ReLU()
 
-        self.conv3 = nn.Conv2d(384, 64, 1)
+        self.conv3 = nn.Conv2d(640, 64, 1)
         self.bn3 = nn.BatchNorm2d(64)
         self.relu3 = nn.ReLU()
         self.conv4 = nn.Conv2d(64, 64, 3, padding=1)
         self.bn4 = nn.BatchNorm2d(64)
         self.relu4 = nn.ReLU()
 
-        self.conv5 = nn.Conv2d(192, 32, 1)
+        self.conv5 = nn.Conv2d(320, 32, 1)
         self.bn5 = nn.BatchNorm2d(32)
         self.relu5 = nn.ReLU()
         self.conv6 = nn.Conv2d(32, 32, 3, padding=1)
