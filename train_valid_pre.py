@@ -42,7 +42,7 @@ def train(train_img_path, train_gt_path, valid_img_path, valid_gt_path, pths_pat
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = EAST()
     if pretrain:
-        model.load_state_dict(model_pth)
+        model.load_state_dict(torch.load(model_pth))
     data_parallel = False
     if torch.cuda.device_count() > 1:
         model = nn.DataParallel(model)
