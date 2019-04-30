@@ -25,7 +25,7 @@ def drawLoss(train_loss, valid_loss, save_name):
     plt.savefig(save_name, format='jpg')
 
 
-def train(train_img_path, train_gt_path, valid_img_path, valid_gt_path, pths_path, batch_size, lr, num_workers, epoch_iter, interval):
+def train(train_img_path, train_gt_path, valid_img_path, valid_gt_path, pths_path, batch_size, lr, num_workers, epoch_iter, interval, pretrain=False, model_pth=None, currrent_epoch=0):
     file_num = len(os.listdir(train_img_path))
     valid_file_num = len(os.listdir(valid_img_path))
     trainset = custom_dataset(train_img_path, train_gt_path)
@@ -41,13 +41,16 @@ def train(train_img_path, train_gt_path, valid_img_path, valid_gt_path, pths_pat
     criterion = Loss()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = EAST()
+    if pretrain:
+        model.load_state_dict(model_pth)
     data_parallel = False
     if torch.cuda.device_count() > 1:
         model = nn.DataParallel(model)
         data_parallel = True
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[epoch_iter // 5, epoch_iter * 2 // 5, epoch_iter * 3 // 5,epoch_iter * 4 // 5], gamma=0.1)
+    res_epoch = epoch_iter - currrent_epoch
+    scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=[res_epoch // 4, res_epoch * 2 // 4, res_epoch * 3 // 4], gamma=0.1)
 
     best_loss = 1000
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -56,6 +59,8 @@ def train(train_img_path, train_gt_path, valid_img_path, valid_gt_path, pths_pat
     train_loss = []
     valid_loss = []
     for epoch in range(epoch_iter):
+        if pretrain:
+            epoch = currrent_epoch
 
         for phase in ['train','valid']:
         # for phase in ['valid', 'train']:
@@ -122,12 +127,13 @@ if __name__ == '__main__':
     valid_gt_path = '/data/home/zjw/dataset/icdar2015/valid_gts/'
     pths_path = './pths_valid'
 
+    model_pth = '/data/home/zjw/pythonFile/EAST-1/pths_valid/model_epoch_750.pth'
     batch_size = 50
-    lr = 1e-2
+    lr = 1e-3
     num_workers = 4
     epoch_iter = 2000
-    save_interval = 50
-    train(train_img_path, train_gt_path, valid_img_path,valid_gt_path, pths_path, batch_size, lr, num_workers, epoch_iter, save_interval)
+    save_interval = 1
+    train(train_img_path, train_gt_path, valid_img_path,valid_gt_path, pths_path, batch_size, lr, num_workers, epoch_iter, save_interval, True, model_pth, 750)
     # a = [1,2,3,4,5]
     # b = [11,12,13,14,15]
     # drawLoss(a, b, './test.jpg')
