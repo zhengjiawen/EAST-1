@@ -58,9 +58,8 @@ def train(train_img_path, train_gt_path, valid_img_path, valid_gt_path, pths_pat
 
     train_loss = []
     valid_loss = []
-    for epoch in range(epoch_iter):
-        if pretrain:
-            epoch = currrent_epoch
+    for epoch in range(currrent_epoch, epoch_iter):
+
 
         for phase in ['train','valid']:
         # for phase in ['valid', 'train']:

@@ -63,7 +63,7 @@ if __name__ == '__main__':
 	batch_size     = 24
 	lr             = 1e-3
 	num_workers    = 4
-	epoch_iter     = 900
+	epoch_iter     = 1800
 	save_interval  = 5
 	train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers, epoch_iter, save_interval)	
 	
