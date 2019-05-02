@@ -71,6 +71,9 @@ def train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers,
         if (epoch + 1) % interval == 0:
             savePath = pths_path + 'lossImg' + str(epoch + 1) + '.jpg'
             drawLoss(train_loss, savePath)
+            lossPath = pths_path + 'loss' + str(epoch + 1) + '.npy'
+            train_loss_np = np.array(train_loss, dtype=float)
+            np.save(lossPath, train_loss_np)
             state_dict = model.module.state_dict() if data_parallel else model.state_dict()
             torch.save(state_dict, os.path.join(pths_path, 'model_epoch_{}.pth'.format(epoch + 1)))
             lr_state = scheduler.state_dict()
