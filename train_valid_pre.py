@@ -23,6 +23,7 @@ def drawLoss(train_loss, valid_loss, save_name):
     plt.xlabel('item number')
     plt.legend(loc='upper left')
     plt.savefig(save_name, format='jpg')
+    plt.close()
 
 
 def train(train_img_path, train_gt_path, valid_img_path, valid_gt_path, pths_path, batch_size, lr, num_workers, epoch_iter, interval, pretrain=False, model_pth=None, currrent_epoch=0):

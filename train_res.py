@@ -22,6 +22,7 @@ def drawLoss(train_loss, save_name):
     plt.xlabel('item number')
     plt.legend(loc='upper left')
     plt.savefig(save_name, format='jpg')
+    plt.close()
 
 
 def train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers, epoch_iter, interval):
@@ -70,7 +71,7 @@ def train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers,
         print(time.asctime(time.localtime(time.time())))
         print('=' * 50)
         if (epoch + 1) % interval == 0:
-            savePath = './pths/' + 'lossImg' + str(epoch + 1) + '.jpg'
+            savePath = pths_path + 'lossImg' + str(epoch + 1) + '.jpg'
             drawLoss(train_loss, savePath)
             state_dict = model.module.state_dict() if data_parallel else model.state_dict()
             torch.save(state_dict, os.path.join(pths_path, 'model_epoch_{}.pth'.format(epoch + 1)))
