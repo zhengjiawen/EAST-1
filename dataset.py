@@ -193,6 +193,8 @@ def is_cross_text(start_loc, length, vertices):
 	for vertice in vertices:
 		p2 = Polygon(vertice.reshape((4,2))).convex_hull
 		inter = p1.intersection(p2).area
+		if p2.area == 0:
+			continue
 		if 0.01 <= inter / p2.area <= 0.99: 
 			return True
 	return False
@@ -485,3 +487,48 @@ class valid_dataset(data.Dataset):
 		score_map, geo_map, ignored_map = get_score_geo_valid(img, vertices, labels, self.scale)
 		return transform(img), score_map, geo_map, ignored_map
 
+#load icdar15,17
+class mul_dataset(data.Dataset):
+	def __init__(self, img_path, gt_path, img_path2, gt_path2, scale=0.25, length=512):
+		super(mul_dataset, self).__init__()
+		self.img_files = [os.path.join(img_path, img_file) for img_file in sorted(os.listdir(img_path))]
+		self.gt_files = [os.path.join(gt_path, gt_file) for gt_file in sorted(os.listdir(gt_path))]
+		self.img_files2 = [os.path.join(img_path2, img_file) for img_file in sorted(os.listdir(img_path2))]
+		self.gt_files2 = [os.path.join(gt_path2, gt_file) for gt_file in sorted(os.listdir(gt_path2))]
+		self.scale = scale
+		self.length = length
+
+	def __len__(self):
+		return len(self.img_files)+len(self.img_files2)
+
+	def __getitem__(self, index):
+		if index < len(self.img_files):
+
+			with open(self.gt_files[index], 'r') as f:
+				lines = f.readlines()
+			img = Image.open(self.img_files[index])
+		else:
+			index2 = index - len(self.img_files)
+			with open(self.gt_files2[index2], 'r') as f:
+				lines = f.readlines()
+			img = Image.open(self.img_files2[index2])
+		if 'RGB' != img.mode:
+			img = img.convert('RGB')
+		vertices, labels = extract_vertices(lines)
+
+
+		img, vertices = adjust_height(img, vertices)
+		img, vertices = rotate_img(img, vertices)
+		try:
+			img, vertices = crop_img(img, vertices, labels, self.length)
+		except ZeroDivisionError:
+			print(self.img_files2[index-len(self.img_files)])
+			print('vec:',vertices)
+		transform = transforms.Compose([transforms.ColorJitter(0.5, 0.5, 0.5, 0.25), \
+										transforms.ToTensor(), \
+										transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))])
+		# transform = transforms.Compose([transforms.ToTensor(), \
+		# 								transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))])
+
+		score_map, geo_map, ignored_map = get_score_geo(img, vertices, labels, self.scale, self.length)
+		return transform(img), score_map, geo_map, ignored_map

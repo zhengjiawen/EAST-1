@@ -86,10 +86,10 @@ if __name__ == '__main__':
 	train_img_path = '/data/home/zjw/pythonFile/masktextspotter.caffe2/lib/datasets/data/icdar2015/train_images/'
 	train_gt_path = '/data/home/zjw/pythonFile/masktextspotter.caffe2/lib/datasets/data/icdar2015/train_gts/'
 	pths_path      = './pths_vgg16'
-	batch_size     = 24
+	batch_size     = 50
 	lr             = 1e-3
 	num_workers    = 4
-	epoch_iter     = 900
-	save_interval  = 20
+	epoch_iter     = 1000
+	save_interval  = 50
 	train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers, epoch_iter, save_interval)	
 	

@@ -25,7 +25,7 @@ def drawLoss(train_loss, save_name):
     plt.close()
 
 
-def train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers, epoch_iter, interval):
+def train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers, epoch_iter, interval, pretrain_model_path=None):
     file_num = len(os.listdir(train_img_path))
     trainset = custom_dataset(train_img_path, train_gt_path)
     train_loader = data.DataLoader(trainset, batch_size=batch_size, \
@@ -34,6 +34,8 @@ def train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers,
     criterion = Loss()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = EAST()
+    if None != pre_train_model:
+        model.load_state_dict(torch.load(pre_train_model))
     data_parallel = False
     if torch.cuda.device_count() > 1:
         model = nn.DataParallel(model)
@@ -87,13 +89,14 @@ def train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers,
 if __name__ == '__main__':
     # train_img_path = os.path.abspath('../ICDAR_2015/train_img')
     # train_gt_path  = os.path.abspath('../ICDAR_2015/train_gt')
+    pre_train_model = '/data/home/zjw/pythonFile/EAST-1/pths_test_res50/model_epoch_500.pth'
     train_img_path = '/data/home/zjw/pythonFile/masktextspotter.caffe2/lib/datasets/data/icdar2015/train_images/'
     train_gt_path = '/data/home/zjw/pythonFile/masktextspotter.caffe2/lib/datasets/data/icdar2015/train_gts/'
-    pths_path = './pths'
-    batch_size = 50
-    lr = 1e-3
+    pths_path = './pths_res50_b24'
+    batch_size = 24
+    lr = 0.5*1e-3
     num_workers = 8
     epoch_iter = 1000
-    save_interval = 20
-    train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers, epoch_iter, save_interval)
+    save_interval = 50
+    train(train_img_path, train_gt_path, pths_path, batch_size, lr, num_workers, epoch_iter, save_interval, pre_train_model)
 
